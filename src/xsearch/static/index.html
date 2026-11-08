@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>社内検索（デモ）</title>
+<style>
+  :root { --fg:#1f2328; --muted:#656d76; --line:#d0d7de; --bg:#fff; --chip:#f6f8fa; --accent:#0969da; }
+  @media (prefers-color-scheme: dark) { :root { --fg:#e6edf3; --muted:#9198a1; --line:#3d444d; --bg:#0d1117; --chip:#161b22; --accent:#4493f8; } }
+  body { margin:0; font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; color:var(--fg); background:var(--bg); }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.lead { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  form { display:flex; gap:8px; }
+  input[type=search] { flex:1; font-size:16px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+  button { font-size:15px; padding:12px 18px; border:1px solid var(--line); border-radius:10px; background:var(--chip); color:var(--fg); cursor:pointer; }
+  .filters { display:flex; gap:6px; margin:12px 0 20px; flex-wrap:wrap; }
+  .filters label { font-size:13px; color:var(--muted); display:flex; gap:4px; align-items:center; }
+  .hit { padding:14px 0; border-top:1px solid var(--line); }
+  .hit h2 { font-size:16px; margin:0 0 4px; }
+  .hit h2 a { color:var(--accent); text-decoration:none; }
+  .meta { font-size:12px; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; }
+  .chip { background:var(--chip); border:1px solid var(--line); border-radius:999px; padding:1px 8px; }
+  .summary { margin:8px 0 0; font-size:14px; line-height:1.6; }
+  .empty { color:var(--muted); padding:24px 0; }
+  footer { margin-top:32px; font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>社内検索（デモ）</h1>
+  <p class="lead">kintone のレコードも、共有フォルダのファイルも、ここから一度に探せます。どこに保存されているかを知らなくてかまいません。</p>
+  <form id="f">
+    <input id="q" type="search" placeholder="例: 経費精算 締め日 / 在宅勤務の申請 / 請求書の保管期間" autofocus>
+    <button type="submit">検索</button>
+  </form>
+  <div class="filters">
+    <label><input type="radio" name="src" value="" checked> すべて</label>
+    <label><input type="radio" name="src" value="fake_kintone"> kintone（デモ）</label>
+    <label><input type="radio" name="src" value="local_folder"> ファイル</label>
+  </div>
+  <div id="results"></div>
+  <footer id="status"></footer>
+</main>
+<script>
+const f = document.getElementById('f'), q = document.getElementById('q'), results = document.getElementById('results'), status = document.getElementById('status');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function health() {
+  try { const h = await (await fetch('healthz')).json();
+    status.textContent = `登録 ${h.documents} 件 / 埋め込み: ${h.embedding} / 取り込み元: ${h.sources.join(', ')}` + (h.last_ingest ? ` / 最終取り込み ${h.last_ingest.finished_at}（要約: ${h.last_ingest.summarizer}）` : '');
+  } catch { status.textContent = 'API に接続できません'; }
+}
+f.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const src = document.querySelector('input[name=src]:checked').value;
+  const url = `search?q=${encodeURIComponent(q.value)}&n=10` + (src ? `&source=${encodeURIComponent(src)}` : '');
+  results.innerHTML = '<div class="empty">検索中…</div>';
+  const hits = await (await fetch(url)).json();
+  if (!hits.length) { results.innerHTML = '<div class="empty">見つかりませんでした</div>'; return; }
+  results.innerHTML = hits.map(h => `
+    <article class="hit">
+      <h2><a href="${esc(h.url)}" target="_blank" rel="noopener">${esc(h.title)}</a></h2>
+      <div class="meta"><span class="chip">${esc(h.source)}</span><span class="chip">${esc(h.kind)}</span><span>${esc(h.updated_at.slice(0,10))}</span><span>score ${h.score.toFixed(3)}${h.keyword_match ? '・語一致' : ''}</span></div>
+      <p class="summary">${esc(h.summary)}</p>
+    </article>`).join('');
+});
+health();
+</script>
+</body>
+</html>

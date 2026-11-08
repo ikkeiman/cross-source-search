@@ -1,0 +1,10 @@
+{
+  "manifest_version": 1,
+  "version": 1,
+  "type": "APP",
+  "name": { "ja": "添付ファイルを外部ストレージへ保存（参照実装）", "en": "Save attachments to external storage (reference)" },
+  "description": { "ja": "レコード編集画面でファイルを選ぶと、cross-source-search の API 経由で Dropbox などへ保存し、保存先のパスと URL をレコードに書き戻します。", "en": "Uploads files via the cross-source-search API and writes back the path/URL." },
+  "icon": "image/icon.png",
+  "desktop": { "js": ["js/desktop.js"], "css": ["css/desktop.css"] },
+  "config": { "html": "html/config.html", "js": ["js/config.js"], "required_params": ["apiBaseUrl", "pathField", "urlField"] }
+}
