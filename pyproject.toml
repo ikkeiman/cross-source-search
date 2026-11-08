@@ -1,0 +1,46 @@
+[project]
+name = "cross-source-search"
+version = "0.1.0"
+description = "複数の保管場所（kintone・Dropbox など）を差分取り込みし、ローカルLLMで要約してベクトル検索で横断する最小実装"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12,<3.14"
+authors = [{ name = "Ikkei Miyata" }]
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "httpx>=0.27",
+  "pydantic>=2.7",
+  "chromadb>=0.5",
+  "python-docx>=1.1",
+  "pypdf>=4.3",
+  "python-multipart>=0.0.9",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.6", "faker>=26"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xsearch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+ignore = ["B008"]  # FastAPI の File()/Form() を引数既定値に書く慣例
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E501"]  # 合成データの文面は 1 行に書いたほうが読みやすい

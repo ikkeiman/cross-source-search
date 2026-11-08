@@ -1,0 +1,27 @@
+# 秘密情報・環境
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+dist/
+build/
+
+# 実行時データ（ChromaDB、取り込み状態、アップロード先）
+data/
+*.db
+*.sqlite3
+
+# エディタ・OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
