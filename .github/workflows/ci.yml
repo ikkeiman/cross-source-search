@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --dev
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+      - name: Test
+        run: uv run pytest -q
+      - name: 合成データで通しの取り込みと検索（Ollama なし → 抜粋要約・ハッシュ埋め込み）
+        run: |
+          uv run python -m xsearch fake-kintone &
+          sleep 3
+          DATA_DIR=/tmp/xdata uv run python -m xsearch ingest
+          DATA_DIR=/tmp/xdata uv run python -m xsearch ingest   # 2回目は差分ゼロ
+          DATA_DIR=/tmp/xdata uv run python -m xsearch search "請求書 保管期間" -n 3
