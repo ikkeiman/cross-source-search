@@ -22,8 +22,9 @@ jobs:
         run: uv run pytest -q
       - name: 合成データで通しの取り込みと検索（Ollama なし → 抜粋要約・ハッシュ埋め込み）
         run: |
-          uv run python -m xsearch fake-kintone &
+          uv run python -m xsearch fake-kintone & FAKE=$!
           sleep 3
           DATA_DIR=/tmp/xdata uv run python -m xsearch ingest
           DATA_DIR=/tmp/xdata uv run python -m xsearch ingest   # 2回目は差分ゼロ
           DATA_DIR=/tmp/xdata uv run python -m xsearch search "請求書 保管期間" -n 3
+          kill $FAKE   # 残したままだと uv のキャッシュ保存（post step）がロック待ちで失敗する
